@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Justice & Incarceration: A Scrollytelling Experience</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Justice & Incarceration: A Scrollytelling Experience</h1>
+  </header>
+
+  <main>
+    <div class="split-container">
+      <div class="poem-section">
+        <div class="poem-content">
+          <div class="poem-paragraph" id="para1">
+            <h2>Time over time, I've had a war waged against me</h2>
+            <p>The war on drugs was a war on me</p>
+            <p>Public policies were a war on me</p>
+            <p>You can isolate me behind these bars</p>
+            <p>But you can't take away my voice</p>
+            <p>I will keep shouting</p>
+            <p>"Do the crimes justify the time?"</p>
+          </div>
+          
+          <div class="poem-paragraph" id="para2">
+            <p>The lines on the legal papers</p>
+            <p>Have become the bars on my cell</p>
+            <p>They wrote injustices into my story</p>
+            <p>From the moment I was born</p>
+            <p>They are not hidden to me</p>
+            <p>So I ask again,</p>
+            <p>Do my crimes justify the time?</p>
+          </div>
+          
+          <div class="poem-paragraph" id="para3">
+            <p>Do the scales tip differently</p>
+            <p>When they see my name</p>
+            <p>When they see my race</p>
+            <p>When they see my zip code</p>
+            <p>or the schools to which I went</p>
+            <p>So I will keep asking</p>
+            <p>Do my crimes justify the time?</p>
+          </div>
+          
+          <div class="poem-paragraph" id="para4">
+            <p>Justice may not be blind</p>
+            <p>But it chooses who it sees</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="visualization-section">
+        <div class="map-container" id="mapContainer">
+          <h2>Percentage of State Population in Prison</h2>
+          <div class="map" id="map">
+            <div class="loading">Loading map data...</div>
+          </div>
+          <div class="legend" id="legend"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+  
+  <footer>
+    <div class="navigation">
+      <button id="prevBtn">◀</button>
+      <button id="nextBtn">▶</button>
+    </div>
+  </footer>
+  
+  <div class="tooltip" id="tooltip"></div>
+  
+  <script src="script.js"></script>
+</body>
+</html>
