@@ -37,7 +37,7 @@ main {
 .poem-section {
   flex: 1;
   background-color: #d4bc8c;
-  padding: 40px;
+  padding: 30px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -47,27 +47,46 @@ main {
 .poem-content {
   max-height: calc(100vh - 150px);
   overflow-y: auto;
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  scroll-behavior: smooth;
+  padding-right: 10px;
 }
 
 .poem-content::-webkit-scrollbar {
-  width: 0;
-  height: 0;
+  width: 8px;
+  height: 8px;
+}
+
+.poem-content::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.05);
+  border-radius: 10px;
+}
+
+.poem-content::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+}
+
+.poem-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.3);
 }
 
 .poem-paragraph {
   margin-bottom: 30px;
   cursor: pointer;
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  transition: transform 0.3s ease, opacity 0.3s ease, color 0.3s ease, font-weight 0.3s ease;
   position: relative;
   z-index: 10;
   font-size: 2em;
   font-weight: 100;
   color: #444;
+  padding: 10px;
+  border-left: 3px solid transparent;
 }
 
 .poem-paragraph:hover {
   transform: translateX(5px);
+  color: #111;
 }
 
 .poem-paragraph h2 {
@@ -87,37 +106,68 @@ main {
   font-weight: 700;
   color: #000;
   transform: translateX(5px);
+  border-left: 4px solid #3c4356;
+  padding-left: 15px;
 }
 
 .poem-paragraph.dimmed {
   opacity: 0.6;
 }
 
+/* Enhanced visualization section with overflow control */
 .visualization-section {
   flex: 1;
   background-color: #3c4356;
-  padding: 40px;
+  padding: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
+  overflow: hidden !important;
+  min-height: 650px;
+  max-height: 850px;
 }
 
-.map-container {
-  width: 100%;
-  max-width: 600px;
-  background-color: rgba(83, 103, 103, 0.7);
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.map-container h2 {
+/* Improved visibility for chart headings */
+.vis-heading {
+  color: #ffffff !important;
   text-align: center;
   margin-bottom: 20px;
   font-size: 22px;
-  color: white;
-  font-weight: 500;
+  font-weight: 600;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.5px;
+}
+
+/* Adjusted map container for better sizing */
+.map-container {
+  width: 100%;
+  max-width: 700px;
+  background-color: rgba(83, 103, 103, 0.7);
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  max-height: 95% !important;
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+  overflow: hidden !important;
+}
+
+/* CONSISTENT CHART BACKGROUND */
+.chart-background {
+  fill: #2a3142 !important;
+  rx: 8;
+}
+
+/* CONSISTENT LEGEND CONTAINER */
+.legend-container {
+  background-color: rgba(42, 49, 66, 0.9);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 15px;
+  margin-top: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .map {
@@ -138,8 +188,9 @@ main {
   cursor: pointer;
 }
 
+/* Improved legend positioning */
 .legend {
-  margin-top: 20px;
+  margin-top: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -161,6 +212,7 @@ main {
   color: #fff;
 }
 
+/* Enhanced tooltip with higher z-index */
 .tooltip {
   position: absolute;
   background-color: rgba(42, 49, 66, 0.95);
@@ -174,7 +226,7 @@ main {
   font-size: 14px;
   line-height: 1.5;
   max-width: 250px;
-  z-index: 1000;
+  z-index: 9999;
   display: none;
   color: white;
 }
@@ -241,33 +293,44 @@ footer {
   background-color: #c0a978;
 }
 
-.region-filter {
-  padding: 12px 22px;
+/* Improved filter button styles with better spacing and margins */
+.region-filter, .race-filter {
+  padding: 10px 18px;
   background-color: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 8px;
   color: white;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   transition: all 0.3s ease;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
   position: relative;
   overflow: hidden;
+  margin: 3px !important;
 }
 
-.region-filter:hover {
+.region-filter:hover, .race-filter:hover {
   background-color: rgba(255, 255, 255, 0.25);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
 }
 
-.region-filter.active {
+.region-filter.active, .race-filter.active {
   background-color: #d4bc8c;
   color: #2a3142;
   border-color: #d4bc8c;
   font-weight: 600;
   box-shadow: 0 3px 8px rgba(212, 188, 140, 0.4);
+}
+
+/* Filter container spacing with reduced margins */
+.region-filters, .race-filters {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
 }
 
 @keyframes btn-pulse {
@@ -286,218 +349,68 @@ footer {
   animation: btn-pulse 0.7s ease-out;
 }
 
-.scatter-chart {
-  background-color: rgba(42, 49, 66, 0.8);
+/* CONSISTENT CHART CONTAINERS */
+.race-chart, .scatter-chart, .gender-chart-container {
+  background-color: #2a3142 !important;
   border-radius: 10px;
-  padding: 30px;
+  padding: 20px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
   margin-top: 15px;
-  width: 100%;
-  height: 100%;
-  min-height: 700px;
-  transition: all 0.5s ease;
+  height: auto !important;
+  min-height: 400px !important;
+  max-height: 600px !important;
+  position: relative;
+  overflow: visible !important;
 }
 
-.circle-dot {
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.circle-dot:hover {
-  stroke-width: 3px !important;
-  transform: scale(1.05);
-  filter: brightness(1.2) !important;
-}
-
-.axis-disclaimer-group rect {
-  transition: all 0.3s ease;
-}
-
-.axis-disclaimer-group:hover rect {
-  fill: rgba(212, 188, 140, 0.4);
-}
-
-.axis-disclaimer {
-  font-family: 'Helvetica Neue', Arial, sans-serif;
-  transition: all 0.3s ease;
-}
-
-.axis-disclaimer-group:hover .axis-disclaimer {
-  font-weight: 600;
-}
-
-.region-indicator {
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
-  opacity: 0.8;
-}
-
-.race-chart {
-  background-color: rgba(42, 49, 66, 0.8);
-  border-radius: 10px;
-  padding: 25px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-  margin-top: 20px;
-}
-
-.race-filters {
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-  margin-bottom: 30px;
-}
-
-.race-filter {
-  padding: 12px 22px;
-  background-color: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 8px;
-  color: white;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-}
-
-.race-filter:hover {
-  background-color: rgba(255, 255, 255, 0.25);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
-}
-
-.race-filter.active {
-  background-color: #d4bc8c;
-  color: #2a3142;
-  border-color: #d4bc8c;
-  font-weight: 600;
-  box-shadow: 0 3px 8px rgba(212, 188, 140, 0.4);
-}
-
-.bar {
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.bar:hover {
-  filter: brightness(1.2);
-}
-
-.state-label {
-  font-family: 'Helvetica Neue', Arial, sans-serif;
-  fill: white;
-  font-size: 16px;
-  font-weight: 600;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-}
-
-.axis-label {
-  font-size: 16px;
-  font-weight: 500;
-  fill: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-.grid line {
-  stroke: rgba(255, 255, 255, 0.08);
-  stroke-dasharray: 3,3;
-}
-
-.gender-content {
+.gender-icon-grid {
+  background-color: transparent;
   display: flex;
   flex-direction: column;
   align-items: center;
-}
-
-.gender-grid {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 30px;
   width: 100%;
-  max-width: 600px;
+  margin: 20px 0;
+  gap: 5px;
 }
 
 .gender-row {
   display: flex;
   justify-content: center;
-  margin-bottom: 15px;
+  gap: 5px;
   width: 100%;
 }
 
-.gender-icon {
-  width: 20px;
-  height: 40px;
-  margin: 0 12px;
-  transition: all 0.2s ease;
-  opacity: 1;
-}
-
-.gender-icon.highlighted {
-  transform: scale(1.2);
-  filter: brightness(1.2);
-}
-
-.gender-legend {
-  display: flex;
-  justify-content: center;
-  gap: 80px;
-  margin: 40px 0;
-}
-
-.gender-legend-item {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.gender-legend-icon {
-  width: 20px;
-  height: 40px;
-}
-
-.gender-legend-label {
-  font-size: 18px;
-  color: white;
-  font-weight: 400;
-}
-
-.stats-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 20px;
-  margin-top: 20px;
-  width: 100%;
-}
-
+/* CONSISTENT STAT BOXES */
 .stat-box {
   text-align: left;
-  background-color: rgba(52, 58, 64, 0.5);
-  padding: 20px 30px;
-  border-radius: 8px;
-  min-width: 200px;
+  background-color: rgba(42, 49, 66, 0.9) !important;
+  padding: 15px 20px;
+  border-radius: 8px !important;
+  min-width: 160px;
   flex-grow: 1;
-  max-width: 300px;
+  max-width: 200px;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
 }
 
 .stat-title {
-  font-size: 18px;
+  font-size: 16px;
   color: rgba(255, 255, 255, 0.9);
-  margin-bottom: 10px;
+  margin-bottom: 8px;
+  font-weight: 600;
 }
 
 .stat-value {
-  font-size: 36px;
+  font-size: 28px;
   font-weight: bold;
   color: white;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .stat-subtitle {
-  font-size: 16px;
-  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .stat-box.female {
@@ -512,13 +425,120 @@ footer {
   border-left: 5px solid #d4bc8c;
 }
 
+/* Gender icons */
+.gender-icon {
+  width: 16px;
+  height: 32px;
+  margin: 0 4px;
+  transition: all 0.2s ease;
+}
+
+.gender-icon.female {
+  filter: drop-shadow(0 0 3px rgba(255, 77, 109, 0.5));
+}
+
+.gender-icon.male {
+  filter: drop-shadow(0 0 2px rgba(67, 97, 238, 0.3));
+}
+
+.gender-stats-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  width: 100%;
+}
+
 .gender-title {
-  font-size: 24px;
-  font-weight: 500;
+  font-size: 22px;
+  font-weight: 600;
   color: white;
   text-align: center;
-  margin-bottom: 30px;
-  margin-top: 10px;
+  margin-bottom: 15px;
+  margin-top: 5px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.bar {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.bar:hover {
+  filter: brightness(1.2);
+  stroke-width: 2px !important;
+}
+
+/* Consistent chart labels */
+.state-label, .axis-label {
+  font-family: 'Helvetica Neue', Arial, sans-serif !important;
+  fill: white !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7) !important;
+}
+
+.grid line {
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-dasharray: 3,3;
+}
+
+/* Enhanced styling for circle dots in scatter plot */
+.circle-dot {
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.circle-dot:hover {
+  stroke-width: 3px !important;
+  transform: scale(1.05);
+  filter: brightness(1.2) !important;
+}
+
+/* Consistent region indicator and axis notes */
+.region-indicator, .axis-note {
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7) !important;
+  opacity: 0.9 !important;
+  font-weight: 700 !important;
+  fill: white !important;
+  font-size: 14px !important;
+}
+
+/* Consistent axes */
+.x-axis text, .y-axis text {
+  fill: rgba(255, 255, 255, 0.9) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+}
+
+.x-axis path, .y-axis path {
+  stroke: rgba(255, 255, 255, 0.5) !important;
+}
+
+.x-axis line, .y-axis line {
+  stroke: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Make sure SVG doesn't get clipped */
+svg {
+  overflow: visible !important;
+}
+
+/* Responsive adjustments */
+@media (max-height: 800px) {
+  .visualization-section {
+    min-height: 550px;
+    max-height: 750px;
+  }
+  
+  .race-chart, .scatter-chart, .gender-chart-container {
+    min-height: 380px !important;
+    max-height: 500px !important;
+  }
+  
+  .poem-paragraph {
+    margin-bottom: 20px;
+    font-size: 1.8em;
+  }
 }
 
 @media (max-width: 768px) {
@@ -540,15 +560,11 @@ footer {
     font-size: 14px;
   }
   
-  .axis-label, .state-label {
-    font-size: 12px;
-  }
-  
   .map-container {
     padding: 15px;
   }
   
-  .map-container h2 {
+  .vis-heading, .map-container h2 {
     font-size: 18px;
   }
 }

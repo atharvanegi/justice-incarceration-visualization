@@ -8,6 +8,62 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <style>
+    /* Critical inline styles to ensure visualizations display correctly */
+    .visualization-section {
+      overflow: hidden !important;
+      min-height: 650px !important;
+      max-height: 850px !important;
+    }
+    
+    .map-container {
+      max-height: 95% !important;
+      overflow: hidden !important;
+    }
+    
+    .race-chart {
+      height: auto !important;
+      min-height: 400px !important;
+      max-height: 600px !important;
+      overflow: visible !important;
+    }
+    
+    .scatter-chart {
+      height: auto !important;
+      min-height: 400px !important;
+      max-height: 550px !important;
+      overflow: visible !important;
+    }
+    
+    /* Force SVG to allow overflow for legends */
+    svg {
+      overflow: visible !important;
+    }
+    
+    /* Ensure text in the charts are legible */
+    svg text {
+      fill: white !important;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important;
+    }
+    
+    /* Make axis note more visible */
+    .scatter-chart .axis-note {
+      fill: white !important;
+      font-size: 14px !important;
+      font-weight: bold !important;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.5) !important;
+    }
+    
+    /* Ensure tooltip is always on top */
+    .tooltip {
+      z-index: 9999 !important;
+    }
+    
+    /* Improved buttons for better clickability */
+    .race-filter, .region-filter {
+      margin: 3px !important;
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -57,7 +113,7 @@
       
       <div class="visualization-section">
         <div class="map-container" id="mapContainer">
-          <h2>Percentage of State Population in Prison</h2>
+          <h2 class="vis-heading">Percentage of State Population in Prison</h2>
           <div class="map" id="map">
             <div class="loading">Loading map data...</div>
           </div>
@@ -77,5 +133,38 @@
   <div class="tooltip" id="tooltip"></div>
   
   <script src="script.js"></script>
+  <script>
+    // Ensure visualizations are properly sized on load and resize
+    document.addEventListener('DOMContentLoaded', function() {
+      // Force redraw visualizations after page is fully loaded
+      setTimeout(function() {
+        if (currentSection === 0) {
+          createMap();
+        } else if (currentSection === 1) {
+          updateRacialDistributionChart();
+        } else if (currentSection === 2) {
+          updateEducationUnemploymentChart();
+        } else if (currentSection === 3) {
+          updateGenderDistributionChart();
+        }
+      }, 500);
+      
+      // Add resize event listener for responsive charts
+      window.addEventListener('resize', function() {
+        // Redraw current visualization
+        setTimeout(function() {
+          if (currentSection === 0) {
+            createMap();
+          } else if (currentSection === 1) {
+            updateRacialDistributionChart();
+          } else if (currentSection === 2) {
+            updateEducationUnemploymentChart();
+          } else if (currentSection === 3) {
+            updateGenderDistributionChart();
+          }
+        }, 300);
+      });
+    });
+  </script>
 </body>
 </html>

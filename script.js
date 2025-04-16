@@ -18,11 +18,29 @@ document.addEventListener('DOMContentLoaded', function() {
   setupParagraphClickEvents();
   setupNavigationButtons();
   setupFancyRegionTransitions();
+  setupRaceFilterEvents();
   
+  // Reset section to first and start
   currentSection = 0;
   highlightCurrentSection();
   initializeFirstVisualization();
+  
+  // Add window resize handler for responsive charts
+  window.addEventListener('resize', handleResize);
 });
+
+function handleResize() {
+  // Redraw current visualization based on current section
+  if (currentSection === 0) {
+    createMap();
+  } else if (currentSection === 1) {
+    updateRacialDistributionChart();
+  } else if (currentSection === 2) {
+    updateEducationUnemploymentChart();
+  } else if (currentSection === 3) {
+    updateGenderDistributionChart();
+  }
+}
 
 function createAllContainers() {
   if (!document.getElementById('racialContainer')) {
@@ -31,7 +49,7 @@ function createAllContainers() {
     racialContainer.className = 'map-container';
     
     racialContainer.innerHTML = `
-      <h2>Prison Population by Race in Top 5 Incarceration States</h2>
+      <h2 class="vis-heading">Prison Population by Race in Top 5 Incarceration States</h2>
       <div class="race-filters">
         <button class="race-filter active" data-race="all">All Races</button>
         <button class="race-filter" data-race="white">White</button>
@@ -47,18 +65,6 @@ function createAllContainers() {
     const mapContainer = document.getElementById('mapContainer');
     mapContainer.parentNode.insertBefore(racialContainer, mapContainer.nextSibling);
     
-    document.querySelectorAll('.race-filter').forEach(button => {
-      button.addEventListener('click', function() {
-        document.querySelectorAll('.race-filter').forEach(btn => {
-          btn.classList.remove('active');
-        });
-        
-        this.classList.add('active');
-        currentRaceFilter = this.getAttribute('data-race');
-        updateRacialDistributionChart();
-      });
-    });
-    
     racialContainer.style.display = 'none';
   }
   
@@ -68,7 +74,7 @@ function createAllContainers() {
     eduUnemplContainer.className = 'map-container';
     
     eduUnemplContainer.innerHTML = `
-      <h2>Education vs. Unemployment Rate and Incarceration</h2>
+      <h2 class="vis-heading">Education vs. Unemployment Rate and Incarceration</h2>
       <div class="region-filters">
         <button class="region-filter active" data-region="all">All Regions</button>
         <button class="region-filter" data-region="Midwest">Midwest</button>
@@ -93,7 +99,7 @@ function createAllContainers() {
     genderContainer.className = 'map-container';
     
     genderContainer.innerHTML = `
-      <h2>Distribution of Prison Population by Gender</h2>
+      <h2 class="vis-heading">Distribution of Prison Population by Gender</h2>
       <div class="gender-content">
         <div class="gender-grid" id="genderGrid">
           <div class="loading">Loading gender data...</div>
@@ -236,6 +242,43 @@ function setupFancyRegionTransitions() {
   });
 }
 
+function setupRaceFilterEvents() {
+  document.querySelectorAll('.race-filter').forEach(button => {
+    button.addEventListener('click', function() {
+      document.querySelectorAll('.race-filter').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      this.classList.add('active');
+      currentRaceFilter = this.getAttribute('data-race');
+      
+      // Instead of redrawing, just update the colors of existing bars
+      const races = ['white', 'black', 'hispanic', 'other'];
+      const raceColors = {
+        white: '#4287f5',
+        black: '#f54278',
+        hispanic: '#43cc71',
+        other: '#55d6e3'
+      };
+      
+      races.forEach(race => {
+        d3.selectAll(`.bar.${race}`)
+          .transition()
+          .duration(300)
+          .attr("fill", d => {
+            if (currentRaceFilter === 'all' || currentRaceFilter === race) {
+              return raceColors[race];
+            }
+            return 'rgba(255, 255, 255, 0.1)';
+          })
+          .attr("opacity", d => {
+            return (currentRaceFilter === 'all' || currentRaceFilter === race) ? 1 : 0.5;
+          });
+      });
+    });
+  });
+}
+
 function setupNavigationButtons() {
   document.getElementById('prevBtn').addEventListener('click', navigateToPrevSection);
   document.getElementById('nextBtn').addEventListener('click', navigateToNextSection);
@@ -351,9 +394,18 @@ function highlightCurrentSection() {
       para.classList.add('dimmed');
     } else {
       para.classList.add('active');
+      
+      // Scroll the active paragraph into view with smooth animation
+      setTimeout(() => {
+        para.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center'  // Center the paragraph in view
+        });
+      }, 200); // Small delay to ensure transition works properly
     }
   });
   
+  // Show appropriate visualization based on current section
   if (currentSection === 0) {
     const mapContainer = document.getElementById('mapContainer');
     if (mapContainer) mapContainer.style.display = 'block';
@@ -402,18 +454,6 @@ function highlightCurrentSection() {
     
     const genderContainer = document.getElementById('genderContainer');
     if (genderContainer) genderContainer.style.display = 'block';
-  } else {
-    const mapContainer = document.getElementById('mapContainer');
-    if (mapContainer) mapContainer.style.display = 'none';
-    
-    const racialContainer = document.getElementById('racialContainer');
-    if (racialContainer) racialContainer.style.display = 'none';
-    
-    const eduUnemplContainer = document.getElementById('eduUnemplContainer');
-    if (eduUnemplContainer) eduUnemplContainer.style.display = 'none';
-    
-    const genderContainer = document.getElementById('genderContainer');
-    if (genderContainer) genderContainer.style.display = 'none';
   }
 }
 
@@ -481,9 +521,10 @@ async function createMap() {
       .attr("width", width)
       .attr("height", height);
     
+    // Adjusted projection with a better fit
     const projection = d3.geoAlbersUsa()
       .translate([width / 2, height / 2])
-      .scale(width);
+      .scale(width * 0.8); // Reduced scale to fit the entire map
     
     const path = d3.geoPath()
       .projection(projection);
@@ -496,7 +537,18 @@ async function createMap() {
       stateNames[state.id] = state.properties.name;
     });
     
-    svg.selectAll(".state")
+    // Add a background to the map for better visibility
+    svg.append("rect")
+      .attr("width", width)
+      .attr("height", height)
+      .attr("fill", "rgba(255, 255, 255, 0.05)")
+      .attr("rx", 8);
+    
+    // Add a map container group for better organization
+    const mapGroup = svg.append("g")
+      .attr("class", "map-group");
+    
+    mapGroup.selectAll(".state")
       .data(states)
       .enter()
       .append("path")
@@ -506,7 +558,7 @@ async function createMap() {
         const stateName = stateNames[d.id];
         return incarcerationData[stateName] ? colorScale(incarcerationData[stateName]) : "#ccc";
       })
-      .attr("stroke", "#000")
+      .attr("stroke", "#fff")
       .attr("stroke-width", 0.5)
       .on("mouseover", function(event, d) {
         const stateName = stateNames[d.id];
@@ -564,6 +616,7 @@ async function createMap() {
   } catch (error) {
     document.getElementById('map').innerHTML = 
       '<div class="error">Error creating map. Please try again.</div>';
+    console.error("Map error:", error);
   }
 }
 
@@ -688,7 +741,6 @@ async function loadRacialDistributionData() {
       '<div class="error">Error loading data. Please try again.</div>';
   }
 }
-
 function updateRacialDistributionChart() {
   const chartDiv = document.getElementById('raceChart');
   chartDiv.innerHTML = '';
@@ -699,9 +751,10 @@ function updateRacialDistributionChart() {
   }
   
   try {
-    const margin = { top: 60, right: 60, bottom: 80, left: 70 };
+    // Adjusted margins for better fit
+    const margin = { top: 50, right: 50, bottom: 150, left: 60 };
     const width = chartDiv.clientWidth - margin.left - margin.right;
-    const height = 550 - margin.top - margin.bottom;
+    const height = 400; // Reduced height
     
     const svg = d3.select("#raceChart")
       .append("svg")
@@ -736,11 +789,11 @@ function updateRacialDistributionChart() {
       .range([height, 0])
       .nice();
     
+    // Use the consistent chart background class
     svg.append("rect")
+      .attr("class", "chart-background")
       .attr("width", width)
-      .attr("height", height)
-      .attr("fill", "rgba(255, 255, 255, 0.02)")
-      .attr("rx", 8);
+      .attr("height", height);
     
     svg.append("g")
       .attr("class", "grid")
@@ -760,15 +813,16 @@ function updateRacialDistributionChart() {
       .attr("class", "state")
       .attr("transform", d => `translate(${x0(d.state)},0)`);
     
+    // Draw all bars initially but set heights immediately
     races.forEach(race => {
       stateBars.append("rect")
         .attr("class", `bar ${race}`)
         .attr("x", d => x1(race))
-        .attr("y", height)
+        .attr("y", d => y(d.racialDistribution[race])) // Set correct y immediately
         .attr("width", x1.bandwidth())
-        .attr("height", 0)
-        .attr("rx", 5)
-        .attr("ry", 5)
+        .attr("height", d => height - y(d.racialDistribution[race])) // Set correct height immediately
+        .attr("rx", 4) // Reduced radius
+        .attr("ry", 4)
         .attr("fill", d => {
           if (currentRaceFilter === 'all' || currentRaceFilter === race) {
             return raceColors[race];
@@ -776,20 +830,15 @@ function updateRacialDistributionChart() {
           return 'rgba(255, 255, 255, 0.1)';
         })
         .attr("stroke", raceColors[race])
-        .attr("stroke-width", 1.5)
+        .attr("stroke-width", 1)
         .attr("opacity", d => {
           return (currentRaceFilter === 'all' || currentRaceFilter === race) ? 1 : 0.5;
-        })
-        .transition()
-        .duration(800)
-        .delay((d, i) => i * 100)
-        .attr("y", d => y(d.racialDistribution[race]))
-        .attr("height", d => height - y(d.racialDistribution[race]));
+        });
         
       stateBars.selectAll(`.bar.${race}`)
         .on("mouseover", function(event, d) {
           d3.select(this)
-            .attr("stroke-width", 3)
+            .attr("stroke-width", 2)
             .attr("opacity", 1)
             .style("filter", "brightness(1.1)");
           
@@ -813,7 +862,7 @@ function updateRacialDistributionChart() {
         })
         .on("mouseout", function() {
           d3.select(this)
-            .attr("stroke-width", 1.5)
+            .attr("stroke-width", 1)
             .attr("opacity", (currentRaceFilter === 'all' || currentRaceFilter === race) ? 1 : 0.5)
             .style("filter", null);
           
@@ -821,39 +870,43 @@ function updateRacialDistributionChart() {
         });
     });
     
+    // Add a line for the x-axis
     svg.append("path")
       .attr("d", `M0,${height}H${width}`)
       .attr("stroke", "rgba(255, 255, 255, 0.3)")
       .attr("stroke-width", 1.5);
       
+    // Add state labels with smaller font
     states.forEach((state, i) => {
       const xPos = x0(state) + x0.bandwidth() / 2;
       
       svg.append("text")
         .attr("class", "state-label")
         .attr("x", xPos)
-        .attr("y", height + 40)
+        .attr("y", height + 25)
         .attr("text-anchor", "middle")
-        .style("font-size", "16px")
+        .style("font-size", "14px") // Reduced size
         .style("font-weight", "bold")
         .style("fill", "white")
         .style("font-family", "'Helvetica Neue', Arial, sans-serif")
         .text(state);
     });
     
+    // Add y-axis
     svg.append("g")
       .attr("class", "y-axis")
       .call(d3.axisLeft(y)
         .tickFormat(d => d + "%")
-        .ticks(10)
+        .ticks(8) // Reduced ticks
         .tickSize(-5)
       )
       .call(g => g.select(".domain").remove())
       .selectAll("text")
-      .style("font-size", "13px")
+      .style("font-size", "11px") // Smaller text
       .style("fill", "white")
       .style("font-family", "'Helvetica Neue', Arial, sans-serif");
     
+    // Add y-axis label
     svg.append("text")
       .attr("transform", "rotate(-90)")
       .attr("y", -margin.left + 15)
@@ -861,52 +914,55 @@ function updateRacialDistributionChart() {
       .attr("dy", "1em")
       .style("text-anchor", "middle")
       .style("fill", "white")
-      .style("font-size", "14px")
+      .style("font-size", "12px") // Smaller text
       .style("font-weight", "bold")
       .text("% of Prison Population");
     
-    svg.append("text")
-      .attr("x", width / 2)
-      .attr("y", -margin.top / 2)
-      .attr("text-anchor", "middle")
-      .style("font-size", "22px")
-      .style("fill", "white")
-      .style("font-weight", "bold")
-      .text("Prison Population by Race");
+    // Legend with improved styling and positioning
+    const legendY = height + 50;
     
-    svg.append("text")
-      .attr("x", width / 2)
-      .attr("y", -margin.top / 2 + 30)
-      .attr("text-anchor", "middle")
-      .style("font-size", "15px")
-      .style("fill", "rgba(255, 255, 255, 0.8)")
-      .text("Top 5 states with highest incarceration rates");
+    // Create a background rectangle for the legend
+    svg.append("rect")
+      .attr("x", width / 2 - 200)  // Center the legend
+      .attr("y", legendY - 10)
+      .attr("width", 400)  // Wide enough for all items
+      .attr("height", 40)
+      .attr("rx", 5)
+      .attr("fill", "rgba(60, 67, 86, 0.8)")  // Semi-transparent dark background
+      .attr("stroke", "rgba(255, 255, 255, 0.2)")
+      .attr("stroke-width", 1);
     
-    const legendSpacing = width / 5;
-    const legendY = height + 65;
+    // Position legend items horizontally with better spacing
+    const legendItems = ["White", "Black", "Hispanic", "Other"];
+    const legendColors = ["#4287f5", "#f54278", "#43cc71", "#55d6e3"];
     
-    races.forEach((race, i) => {
-      const legendX = (i * legendSpacing) + (legendSpacing / 2);
+    for (let i = 0; i < legendItems.length; i++) {
+      // Calculate position to distribute evenly
+      const xPos = width / 2 - 180 + (i * 100);
       
+      // Add color squares
       svg.append("rect")
-        .attr("x", legendX - 60)
+        .attr("x", xPos)
         .attr("y", legendY)
-        .attr("width", 20)
-        .attr("height", 20)
-        .attr("rx", 4)
-        .attr("ry", 4)
-        .attr("fill", raceColors[race]);
+        .attr("width", 16)
+        .attr("height", 16)
+        .attr("fill", legendColors[i]);
       
+      // Add text labels
       svg.append("text")
-        .attr("x", legendX - 35)
-        .attr("y", legendY + 15)
+        .attr("x", xPos + 25)
+        .attr("y", legendY + 12)
+        .attr("text-anchor", "start")
+        .attr("alignment-baseline", "middle")
         .style("font-size", "14px")
         .style("fill", "white")
         .style("font-weight", "500")
-        .text(race.charAt(0).toUpperCase() + race.slice(1));
-    });
+        .text(legendItems[i]);
+    }
+    
   } catch (error) {
     chartDiv.innerHTML = '<div class="error">Error creating chart. Please try again.</div>';
+    console.error("Race chart error:", error);
   }
 }
 
@@ -921,7 +977,7 @@ async function loadEducationUnemploymentData() {
       eduUnemplContainer.className = 'map-container';
       
       eduUnemplContainer.innerHTML = `
-        <h2>Education vs. Unemployment Rate and Incarceration</h2>
+        <h2 class="vis-heading">Education vs. Unemployment Rate and Incarceration</h2>
         <div class="region-filters">
           <button class="region-filter active" data-region="all">All Regions</button>
           <button class="region-filter" data-region="Midwest">Midwest</button>
@@ -1045,22 +1101,23 @@ function updateEducationUnemploymentChart() {
     ? educationUnemploymentData 
     : educationUnemploymentData.filter(d => d.region === currentRegionFilter);
   
-  const margin = { top: 60, right: 50, bottom: 120, left: 70 };
+  // Significantly increased bottom margin to ensure disclaimer text fits
+  const margin = { top: 50, right: 40, bottom: 160, left: 60 };
   const width = chartDiv.clientWidth - margin.left - margin.right;
-  const height = 550 - margin.top - margin.bottom;
+  const height = 380 - margin.top - margin.bottom;
   
   const svg = d3.select("#scatterChart")
     .append("svg")
     .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
+    .attr("height", height + margin.top + margin.bottom + 20) // Added extra space
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
   
+  // Use the consistent chart background class
   svg.append("rect")
+    .attr("class", "chart-background")
     .attr("width", width)
-    .attr("height", height)
-    .attr("fill", "rgba(255, 255, 255, 0.02)")
-    .attr("rx", 8);
+    .attr("height", height);
   
   const regionColors = {
     "Midwest": "#F9C74F",
@@ -1089,7 +1146,7 @@ function updateEducationUnemploymentChart() {
   
   const size = d3.scaleSqrt()
     .domain([0, Math.max(3, sizeExtent[1])])
-    .range([6, 35]);
+    .range([4, 30]); // Reduced circle sizes
   
   svg.append("g")
     .attr("class", "grid")
@@ -1097,7 +1154,7 @@ function updateEducationUnemploymentChart() {
     .call(d3.axisBottom(x)
       .tickSize(-height)
       .tickFormat("")
-      .ticks(7)
+      .ticks(6)
     )
     .selectAll("line")
     .style("stroke", "rgba(255, 255, 255, 0.07)")
@@ -1108,7 +1165,7 @@ function updateEducationUnemploymentChart() {
     .call(d3.axisLeft(y)
       .tickSize(-width)
       .tickFormat("")
-      .ticks(6)
+      .ticks(5)
     )
     .selectAll("line")
     .style("stroke", "rgba(255, 255, 255, 0.07)")
@@ -1172,20 +1229,20 @@ function updateEducationUnemploymentChart() {
     .attr("transform", `translate(0,${height})`)
     .call(d3.axisBottom(x)
       .tickFormat(d => d + "%")
-      .ticks(7))
+      .ticks(6))
     .selectAll("text")
       .style("fill", "rgba(255, 255, 255, 0.8)")
-      .style("font-size", "12px")
+      .style("font-size", "11px") // Smaller text
       .attr("y", 10);
 
   svg.append("g")
     .attr("class", "y-axis")
     .call(d3.axisLeft(y)
       .tickFormat(d => d + "%")
-      .ticks(6))
+      .ticks(5))
     .selectAll("text")
       .style("fill", "rgba(255, 255, 255, 0.8)")
-      .style("font-size", "12px");
+      .style("font-size", "11px"); // Smaller text
   
   svg.append("text")
     .attr("class", "axis-label")
@@ -1193,7 +1250,7 @@ function updateEducationUnemploymentChart() {
     .attr("x", width / 2)
     .attr("y", height + 35)
     .style("fill", "white")
-    .style("font-size", "16px")
+    .style("font-size", "14px") // Smaller text
     .style("font-weight", "500")
     .text("Higher Education Rate");
   
@@ -1204,79 +1261,90 @@ function updateEducationUnemploymentChart() {
     .attr("x", -height / 2)
     .attr("y", -margin.left + 20)
     .style("fill", "white")
-    .style("font-size", "16px")
+    .style("font-size", "14px") // Smaller text
     .style("font-weight", "500")
     .text("Unemployment Rate");
   
+  // Create the legend container with improved styling
+  const legendY = height + 50;
+  
+  // Create background for the legend
+  svg.append("rect")
+    .attr("x", width / 2 - 200)  // Center the legend
+    .attr("y", legendY - 10)
+    .attr("width", 400)  // Wide enough for all items
+    .attr("height", 90)  // Tall enough for all elements including axis note
+    .attr("rx", 5)
+    .attr("fill", "rgba(60, 67, 86, 0.8)")  // Semi-transparent dark background
+    .attr("stroke", "rgba(255, 255, 255, 0.2)")
+    .attr("stroke-width", 1);
+  
+  // Add legend title
   svg.append("text")
     .attr("x", width / 2)
-    .attr("y", -margin.top / 2)
+    .attr("y", legendY + 10)
     .attr("text-anchor", "middle")
-    .style("font-size", "18px")
     .style("fill", "white")
+    .style("font-size", "16px")
     .style("font-weight", "bold")
-    .text("Education vs. Unemployment by State");
+    .text("Regions");
   
-  const legendX = width / 2 - 180;
-  const legendY = height + 65;
+  // Render region indicators horizontally 
+  const regionLabels = ["Midwest", "Northeast", "South", "West"];
   
-  const regionLegend = svg.append("g")
-    .attr("class", "region-legend")
-    .attr("transform", `translate(${legendX}, ${legendY})`);
-  
-  Object.keys(regionColors).forEach((region, i) => {
-    if (region !== "Other") {
-      const legendRow = regionLegend.append("g")
-        .attr("transform", `translate(${i * 100}, 0)`);
-      
-      legendRow.append("circle")
-        .attr("r", 7)
-        .attr("cx", 8)
-        .attr("cy", 0)
-        .style("fill", regionColors[region])
-        .style("fill-opacity", 0.8)
-        .style("stroke", regionColors[region]);
-      
-      legendRow.append("text")
-        .attr("x", 20)
-        .attr("y", 4)
-        .style("font-size", "13px")
-        .style("font-weight", "500")
-        .style("fill", "white")
-        .text(region);
-    }
-  });
-  
-  const disclaimerG = svg.append("g")
-    .attr("class", "axis-disclaimer-group")
-    .attr("transform", `translate(${width/2}, ${height + 95})`);
-  
-  disclaimerG.append("rect")
-    .attr("x", -175)
-    .attr("y", -12)
-    .attr("width", 350)
-    .attr("height", 25)
-    .attr("rx", 12)
-    .attr("fill", "rgba(212, 188, 140, 0.25)");
+  for (let i = 0; i < regionLabels.length; i++) {
+    // Calculate positions for two rows of legend items
+    const xPos = (i < 2) 
+      ? width / 2 - 150 + (i * 150) 
+      : width / 2 - 150 + ((i - 2) * 150);
     
-  disclaimerG.append("text")
-    .attr("class", "axis-disclaimer")
+    const yPos = (i < 2) ? legendY + 35 : legendY + 60;
+    
+    svg.append("circle")
+      .attr("cx", xPos)
+      .attr("cy", yPos)
+      .attr("r", 6)
+      .attr("fill", regionColors[regionLabels[i]]);
+    
+    svg.append("text")
+      .attr("x", xPos + 15)
+      .attr("y", yPos + 4)
+      .attr("text-anchor", "start")
+      .attr("alignment-baseline", "middle")
+      .style("font-size", "14px")
+      .style("fill", "white")
+      .text(regionLabels[i]);
+  }
+  
+  // Add size explanation outside the legend box
+  svg.append("text")
+    .attr("x", width / 2)
+    .attr("y", legendY + 110)
     .attr("text-anchor", "middle")
-    .attr("x", 0)
-    .attr("y", 5)
-    .style("fill", "#FFFFFF")
+    .style("fill", "white")
     .style("font-size", "14px")
-    .style("font-weight", "500")
+    .text("Circle size represents incarceration rate");
+  
+  // Add axis disclaimer at the bottom - FIXED with enhanced styling
+  svg.append("text")
+    .attr("class", "axis-note")
+    .attr("x", width / 2)
+    .attr("y", legendY + 135)
+    .attr("text-anchor", "middle")
+    .style("fill", "white")
+    .style("font-size", "14px")
+    .style("font-weight", "bold")
     .text("Note: X-axis starts at 20%, Y-axis starts at 2%");
-    
+  
+  // Add region indicator if a specific region is selected
   if (currentRegionFilter !== 'all') {
     svg.append("text")
       .attr("class", "region-indicator")
       .attr("text-anchor", "start")
       .attr("x", 10)
-      .attr("y", 30)
+      .attr("y", 20)
       .style("fill", regionColors[currentRegionFilter])
-      .style("font-size", "18px")
+      .style("font-size", "16px") // Smaller text
       .style("font-weight", "bold")
       .style("opacity", 0)
       .text(`Showing ${currentRegionFilter} Region`)
@@ -1366,76 +1434,87 @@ function updateGenderDistributionChart() {
     return;
   }
 
+  // Create a more compact layout
+  const compactLayout = document.createElement('div');
+  compactLayout.className = 'gender-compact-layout';
+  genderGrid.appendChild(compactLayout);
+
   const title = document.createElement('div');
   title.className = 'gender-title';
-  title.textContent = 'Prison Population Distribution by Gender';
-  genderGrid.appendChild(title);
+  title.textContent = 'Gender Distribution in Prison Population';
+  compactLayout.appendChild(title);
 
+  // Calculate percentages
   const femalePercentage = Math.round(genderData.female.percentage);
   const malePercentage = Math.round(genderData.male.percentage);
 
-  const totalIcons = 50;
-  const femaleIcons = Math.max(1, Math.round((femalePercentage / 100) * totalIcons));
+  // Create visual representation with MORE icons
+  const totalIcons = 50; // Increased from 20 to 50
+  const femaleIcons = Math.max(Math.round((femalePercentage / 100) * totalIcons), 3); // Ensure at least 3 female icons
   const maleIcons = totalIcons - femaleIcons;
 
   const columns = 10;
-  const rows = 5;
+  const rows = Math.ceil(totalIcons / columns);
+
+  // Create icon grid with more rows
+  const iconGrid = document.createElement('div');
+  iconGrid.className = 'gender-icon-grid';
+  compactLayout.appendChild(iconGrid);
 
   const femaleIconDataUrl = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCA0OCI+PGNpcmNsZSBjeD0iMTIiIGN5PSI4IiByPSI2IiBmaWxsPSIjZmY0ZDZkIj48L2NpcmNsZT48cG9seWdvbiBwb2ludHM9IjIwLDQwIDQsNDAgMTIsMTYiIGZpbGw9IiNmZjRkNmQiPjwvcG9seWdvbj48L3N2Zz4=';
   const maleIconDataUrl = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCA0OCI+PGNpcmNsZSBjeD0iMTIiIGN5PSI4IiByPSI2IiBmaWxsPSIjNDM2MWVlIj48L2NpcmNsZT48cmVjdCB4PSI4IiB5PSIxNiIgd2lkdGg9IjgiIGhlaWdodD0iMjQiIGZpbGw9IiM0MzYxZWUiPjwvcmVjdD48L3N2Zz4=';
 
-  const container = d3.select('#genderGrid');
-
+  // Create icon grid using an array-based approach for better distribution
+  let icons = [];
+  for (let i = 0; i < femaleIcons; i++) {
+    icons.push('female');
+  }
+  for (let i = 0; i < maleIcons; i++) {
+    icons.push('male');
+  }
+  
+  // Optional: shuffle the icons for a more random distribution
+  /*
+  for (let i = icons.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [icons[i], icons[j]] = [icons[j], icons[i]];
+  }
+  */
+  
+  // Display icons in a grid
   for (let i = 0; i < rows; i++) {
-    const row = container.append('div')
-      .attr('class', 'gender-row');
+    const row = document.createElement('div');
+    row.className = 'gender-row';
+    iconGrid.appendChild(row);
     
-    for (let j = 0; j < columns; j++) {
+    for (let j = 0; j < columns && (i * columns + j) < totalIcons; j++) {
       const index = i * columns + j;
       
-      const isFemale = index < femaleIcons;
-      const iconSrc = isFemale ? femaleIconDataUrl : maleIconDataUrl;
-      const iconClass = isFemale ? 'female' : 'male';
+      const icon = document.createElement('img');
+      icon.className = `gender-icon ${icons[index]}`;
+      icon.src = icons[index] === 'female' ? femaleIconDataUrl : maleIconDataUrl;
+      icon.width = 16; // Smaller icon
+      icon.height = 32; // Smaller icon
+      icon.alt = icons[index] === 'female' ? 'Female Icon' : 'Male Icon';
       
-      row.append('img')
-        .attr('class', `gender-icon ${iconClass}`)
-        .attr('src', iconSrc)
-        .attr('width', '20')
-        .attr('height', '40')
-        .attr('alt', isFemale ? 'Female Icon' : 'Male Icon')
-        .on('mouseover', function() {
-          d3.select(this).classed('highlighted', true);
-        })
-        .on('mouseout', function() {
-          d3.select(this).classed('highlighted', false);
-        });
+      row.appendChild(icon);
     }
   }
 
-  const legend = document.createElement('div');
-  legend.className = 'gender-legend';
-
-  const femaleLegend = document.createElement('div');
-  femaleLegend.className = 'gender-legend-item';
-  femaleLegend.innerHTML = `
-    <img class="gender-legend-icon" src="${femaleIconDataUrl}" width="20" height="40" alt="Female Icon">
-    <span class="gender-legend-label">Female</span>
-  `;
-
-  const maleLegend = document.createElement('div');
-  maleLegend.className = 'gender-legend-item';
-  maleLegend.innerHTML = `
-    <img class="gender-legend-icon" src="${maleIconDataUrl}" width="20" height="40" alt="Male Icon">
-    <span class="gender-legend-label">Male</span>
-  `;
-
-  legend.appendChild(femaleLegend);
-  legend.appendChild(maleLegend);
-  genderGrid.appendChild(legend);
-
+  // Create compact legend and stats area with background to match other charts
   const statsContainer = document.createElement('div');
   statsContainer.className = 'stats-container';
+  statsContainer.style.marginTop = '20px';
+  statsContainer.style.padding = '15px';
+  statsContainer.style.borderRadius = '8px';
+  statsContainer.style.backgroundColor = 'rgba(42, 49, 66, 0.8)'; // Match chart background color
+  compactLayout.appendChild(statsContainer);
 
+  const statsRow = document.createElement('div');
+  statsRow.className = 'gender-stats-row';
+  statsContainer.appendChild(statsRow);
+
+  // Female stats
   const femaleStats = document.createElement('div');
   femaleStats.className = 'stat-box female';
   femaleStats.innerHTML = `
@@ -1443,7 +1522,9 @@ function updateGenderDistributionChart() {
     <div class="stat-value">${femalePercentage.toFixed(1)}%</div>
     <div class="stat-subtitle">${genderData.female.count.toLocaleString()} people</div>
   `;
+  statsRow.appendChild(femaleStats);
 
+  // Male stats
   const maleStats = document.createElement('div');
   maleStats.className = 'stat-box male';
   maleStats.innerHTML = `
@@ -1451,17 +1532,15 @@ function updateGenderDistributionChart() {
     <div class="stat-value">${malePercentage.toFixed(1)}%</div>
     <div class="stat-subtitle">${genderData.male.count.toLocaleString()} people</div>
   `;
+  statsRow.appendChild(maleStats);
 
+  // Total stats
   const totalStats = document.createElement('div');
   totalStats.className = 'stat-box total';
   totalStats.innerHTML = `
-    <div class="stat-title">Total Prison Population</div>
+    <div class="stat-title">Total Population</div>
     <div class="stat-value">${genderData.total.toLocaleString()}</div>
     <div class="stat-subtitle">Across All States</div>
   `;
-
-  statsContainer.appendChild(femaleStats);
-  statsContainer.appendChild(maleStats);
-  statsContainer.appendChild(totalStats);
-  genderGrid.appendChild(statsContainer);
+  statsRow.appendChild(totalStats);
 }
