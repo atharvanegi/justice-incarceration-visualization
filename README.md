@@ -6,7 +6,7 @@ This project presents an interactive, multi-panel data visualization exploring i
 
 ## 🚀 Live Preview
 
-> *(Optional: Add your GitHub Pages or deployment link here)*
+https://atharvanegi.github.io/justice-incarceration-visualization/
 
 ---
 
