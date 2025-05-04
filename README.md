@@ -79,11 +79,7 @@ This visualization is designed to uncover trends such as:
 
 ---
 
-## 🖼️ Screenshots
 
-> *(Add visuals if available to show key parts of your app — e.g., maps, charts, tooltips)*
-
----
 
 ## 📊 Data Source
 
